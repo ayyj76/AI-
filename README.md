@@ -9,6 +9,8 @@
 ## ✨ 主要特性
 
 - 🤖 **AI 智能解答** - 快速解答各类问题
+- 🌍 **多模型支持** - 已接入[豆包模型](https://www.doubao.com/)及部分 Google [Gemini](https://gemini.google.com/) 模型，提供多样化的解答来源。
+- 💰 **免费额度** - 应用当前提供免费使用额度，方便用户体验和测试 AI 的强大功能。
 - 💬 **网络请求** - 基于 OkHttp 的稳定网络通信
 - ⚡ **高性能异步处理** - 使用 Kotlin Coroutines
 - 🎨 **现代化 UI** - 基于 Jetpack Compose 构建
@@ -25,16 +27,15 @@
 
 ## 📦 项目结构
 
-```
-app/
-├── src/main/
-│   ├── java/                    # Kotlin 源代码
-│   │   └── com/yyj/aiapp/       # 应用包名
-│   ├── res/                     # 资源文件
-│   └── AndroidManifest.xml      # 应用清单
-├── build.gradle.kts             # 应用模块构建配置
-└── proguard-rules.pro           # 混淆规则
-```
+以下是项目的核心目录结构：
+
+* `app/` (主要应用模块)
+    * `src/main/` (源码集)
+        * `java/com/yyj/aiapp/` - Kotlin/Java 源代码
+        * `res/` - 资源文件 (图标, 字符串, 主题等)
+        * `AndroidManifest.xml` - 应用清单文件 (权限、Activity声明)
+    * `build.gradle.kts` - 应用模块的 Gradle 构建脚本
+    * `proguard-rules.pro` - 代码混淆规则
 
 ## 🚀 快速开始
 
@@ -48,27 +49,27 @@ app/
 ### 构建与运行
 
 1. **克隆项目**
-   ```bash
-   git clone https://github.com/ayyj76/AI-.git
-   cd AI-
-   ```
+   ```bash
+   git clone [https://github.com/ayyj76/AI-.git](https://github.com/ayyj76/AI-.git)    
+   cd AI-
+   ```
 
 2. **使用 Android Studio 打开项目**
-   - 打开 Android Studio
-   - 选择 "Open an Existing Project"
-   - 选择项目根目录
+   - 打开 Android Studio
+   - 选择 "Open an Existing Project"
+   - 选择项目根目录
 
 3. **构建项目**
-   ```bash
-   ./gradlew build
-   ```
+   ```bash
+   ./gradlew build
+   ```
 
 4. **运行应用**
-   - 连接 Android 设备或启动模拟器
-   - 点击 Run 按钮或执行：
-   ```bash
-   ./gradlew installDebug
-   ```
+   - 连接 Android 设备或启动模拟器
+   - 点击 Run 按钮或执行：
+   ```bash
+   ./gradlew installDebug
+   ```
 
 ## 📋 系统要求
 
