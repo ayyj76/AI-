@@ -50,21 +50,23 @@
 
 1. **克隆项目**
    ```bash
+   
    git clone [https://github.com/ayyj76/AI-.git](https://github.com/ayyj76/AI-.git)    
    cd AI-
    ```
 
-2. **使用 Android Studio 打开项目**
+3. **使用 Android Studio 打开项目**
    - 打开 Android Studio
    - 选择 "Open an Existing Project"
    - 选择项目根目录
 
-3. **构建项目**
+4. **构建项目**
    ```bash
+   
    ./gradlew build
    ```
 
-4. **运行应用**
+6. **运行应用**
    - 连接 Android 设备或启动模拟器
    - 点击 Run 按钮或执行：
    ```bash
