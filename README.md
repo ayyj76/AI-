@@ -96,7 +96,7 @@ AI-/
 
 ## 🔧 配置说明
 
-### API配置
+### API配置(项目自带免费额度APIKey，用完需自配！)
 
 在 `local.properties` 中配置API密钥：
 ```properties
@@ -159,7 +159,7 @@ A: 查看Logcat日志，检查依赖版本是否兼容。
 ## 📞 联系方式
 
 - 提交Issue进行反馈
-- 邮箱：your_email@example.com
+- 邮箱：yujiann111@gmail.com
 
 ## 🙏 致谢
 
