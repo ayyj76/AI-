@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">AI 解题助手</string>
+    <string name="button_overlay">开启系统悬浮窗</string>
+    <string name="model_selection_title">模型选择</string>
+    <string name="model_hint">请选择模型</string>
+    <string name="model_desc">不同模型在速度和质量上略有差异，可在配置页维护自定义 ID。</string>
+    <string name="extra_hint">描述题目或补充背景，可留空</string>
+    <string name="button_add_image">拍照/上传</string>
+    <string name="manual_image_preview_desc">已上传的题目图片预览</string>
+    <string name="screenshot_status_empty">最近图片：未检测到，请截屏或上传</string>
+    <string name="screenshot_status_ready">最近图片：已从悬浮窗截屏获取</string>
+    <string name="screenshot_status_manual">最近图片：已通过拍照/上传获取</string>
+    <string name="button_send">发送请求</string>
+    <string name="button_send_with_provider">发送到 %1$s</string>
+    <string name="button_test_api">测试 API 是否可用</string>
+    <string name="result_title">返回结果</string>
+    <string name="config_provider_title">模型服务提供商</string>
+    <string name="config_provider_desc">选择默认调用的模型服务，全局生效。</string>
+    <string name="config_provider_google">Gemini (需要VPN)</string>
+    <string name="config_provider_doubao">火山引擎豆包</string>
+    <string name="config_google_title">Gemini 配置</string>
+    <string name="config_api_base_hint">API 地址</string>
+    <string name="config_api_hint">请输入或粘贴 API Key</string>
+    <string name="config_model_hint">模型 ID</string>
+    <string name="config_doubao_title">火山引擎豆包配置</string>
+    <string name="config_doubao_desc">请填写火山引擎豆包的 API 地址、API Key 和模型 ID。</string>
+    <string name="button_paste">粘贴</string>
+    <string name="button_save">保存</string>
+    <string name="button_clear">清除</string>
+    <string name="config_prompt_title">自定义提示词</string>
+    <string name="config_prompt_hint">为我解决这道题，给我答案，无需过程</string>
+    <string name="button_reset">恢复默认</string>
+    <string name="button_save_all">保存全部</string>
+    <string name="result_overlay_default">Gemini 返回</string>
+    <string name="dialog_option_camera">拍照</string>
+    <string name="dialog_option_gallery">从相册选择</string>
+    <string name="dialog_option_remove_image">清除图片</string>
+    <string-array name="provider_options">
+        <item>@string/provider_option_doubao</item>
+        <item>@string/provider_option_google</item>
+    </string-array>
+    <string name="provider_selection_title">服务商选择</string>
+    <string name="provider_selection_hint">请选择模型服务商</string>
+    <string name="provider_option_doubao">火山引擎豆包</string>
+    <string name="provider_option_google">Gemini (需要VPN)</string>
+    <string-array name="model_options_gemini">
+        <item>gemini-2.5-flash</item>
+        <item>gemini-2.5-flash-preview-09-2025</item>
+        <item>gemini-2.5-flash-lite</item>
+        <item>gemini-2.5-flash-lite-preview-09-2025</item>
+        <item>gemini-2.5-pro</item>
+        <item>gemini-2.0-flash</item>
+        <item>gemini-2.0-flash-lite</item>
+    </string-array>
+    <string-array name="model_options_doubao">
+        <item>doubao-seed-1-6-flash-250828</item>
+        <item>doubao-seed-1-6-vision-250815</item>
+    </string-array>
+</resources>
