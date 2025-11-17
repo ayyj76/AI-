@@ -50,7 +50,6 @@
 
 1. **克隆项目**
    ```bash
-   
    git clone [https://github.com/ayyj76/AI-.git](https://github.com/ayyj76/AI-.git)    
    cd AI-
    ```
@@ -62,7 +61,6 @@
 
 4. **构建项目**
    ```bash
-   
    ./gradlew build
    ```
 
