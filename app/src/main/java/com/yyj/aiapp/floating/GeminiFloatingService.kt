@@ -1,6 +1,10 @@
 package com.yyj.aiapp.floating
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
@@ -11,9 +15,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
+import android.hardware.display.DisplayManager
+import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
@@ -26,9 +33,12 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.LinearInterpolator
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.yyj.aiapp.MainActivity
 import com.yyj.aiapp.R
@@ -61,6 +71,12 @@ class GeminiFloatingService : Service() {
     private var hideResultRunnable: Runnable? = null
     private var mediaProjection: MediaProjection? = null
     private var imageReader: ImageReader? = null
+    private var virtualDisplay: VirtualDisplay? = null
+    private var captureWidth: Int = 0
+    private var captureHeight: Int = 0
+    private var captureDensity: Int = 0
+    private var bubbleAnimator: ObjectAnimator? = null
+    private var glowAnimator: ObjectAnimator? = null
     private var capturing = false
     private var currentConfig: GeminiConfig? = null
     private var projectionForegroundSet = false
@@ -151,12 +167,17 @@ class GeminiFloatingService : Service() {
         projection.registerCallback(projectionCallback, handler)
         callbackRegistered = true
         ensureProjectionForeground()
-        return true
+        return prepareVirtualDisplay()
     }
 
     private fun releaseProjection() {
         imageReader?.close()
         imageReader = null
+        virtualDisplay?.release()
+        virtualDisplay = null
+        captureWidth = 0
+        captureHeight = 0
+        captureDensity = 0
         mediaProjection?.let { projection ->
             if (callbackRegistered) {
                 projection.unregisterCallback(projectionCallback)
@@ -166,6 +187,40 @@ class GeminiFloatingService : Service() {
         }
         mediaProjection = null
         projectionForegroundSet = false
+    }
+
+    private fun prepareVirtualDisplay(): Boolean {
+        val projection = mediaProjection ?: return false
+        if (virtualDisplay != null && imageReader != null) {
+            return true
+        }
+        val metrics = resources.displayMetrics
+        captureWidth = metrics.widthPixels
+        captureHeight = metrics.heightPixels
+        captureDensity = metrics.densityDpi
+        val reader = ImageReader.newInstance(
+            captureWidth,
+            captureHeight,
+            PixelFormat.RGBA_8888,
+            3
+        )
+        imageReader = reader
+        virtualDisplay = projection.createVirtualDisplay(
+            "ai_capture",
+            captureWidth,
+            captureHeight,
+            captureDensity,
+            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+            reader.surface,
+            null,
+            handler
+        )
+        if (virtualDisplay == null) {
+            reader.close()
+            imageReader = null
+            return false
+        }
+        return true
     }
 
     @SuppressLint("InflateParams")
@@ -201,10 +256,12 @@ class GeminiFloatingService : Service() {
         }
         bubbleView = view
         bubbleParams = params
+        startBubbleAnimations(view)
     }
 
     private fun removeBubble() {
         val wm = windowManager ?: return
+        stopBubbleAnimations()
         bubbleView?.let { wm.removeView(it) }
         bubbleView = null
         bubbleParams = null
@@ -215,9 +272,13 @@ class GeminiFloatingService : Service() {
             showFailureOverlay("正在处理上一张截图，请稍候")
             return
         }
-        val projection = mediaProjection
-        if (projection == null) {
+        if (mediaProjection == null) {
             showResultOverlay("需要录屏权限才能截题，请在弹出的授权框中允许。", durationMs = 2000L)
+            promptProjectionPermission()
+            return
+        }
+        if (!prepareVirtualDisplay()) {
+            showFailureOverlay("初始化录屏通道失败，请重试")
             promptProjectionPermission()
             return
         }
@@ -225,7 +286,7 @@ class GeminiFloatingService : Service() {
         bubbleView?.alpha = 0.6f
         serviceScope.launch {
             try {
-                val base64 = captureScreen(projection)
+                val base64 = captureFrame()
                     ?: throw IllegalStateException("无法获取屏幕内容")
                 broadcastResult(base64 = base64)
                 val config = currentConfig ?: ConfigStore.readConfig(this@GeminiFloatingService)
@@ -263,44 +324,25 @@ class GeminiFloatingService : Service() {
         }
     }
 
-    private suspend fun captureScreen(projection: MediaProjection): String? =
+    private suspend fun captureFrame(): String? =
         withContext(Dispatchers.IO) {
-            val metrics = resources.displayMetrics
-            val width = metrics.widthPixels
-            val height = metrics.heightPixels
-            val density = metrics.densityDpi
-            val reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 1)
-            imageReader = reader
-            if (!callbackRegistered) {
-                projection.registerCallback(projectionCallback, handler)
-                callbackRegistered = true
+            val reader = imageReader ?: return@withContext null
+            var image = reader.acquireLatestImage()
+            if (image == null) {
+                delay(120)
+                image = reader.acquireLatestImage()
             }
-            val virtualDisplay = projection.createVirtualDisplay(
-                "gemini_capture",
-                width,
-                height,
-                density,
-                0,
-                reader.surface,
-                null,
-                null
-            )
-            if (virtualDisplay == null) {
-                reader.close()
-                imageReader = null
-                return@withContext null
-            }
-            delay(200)
-            val image = reader.acquireLatestImage() ?: run {
-                virtualDisplay?.release()
-                reader.close()
-                imageReader = null
-                return@withContext null
-            }
-            val planes = image.planes.first()
+            val captured = image ?: return@withContext null
+            val planes = captured.planes.first()
             val buffer = planes.buffer
             val pixelStride = planes.pixelStride
             val rowStride = planes.rowStride
+            val width = captureWidth
+            val height = captureHeight
+            if (width == 0 || height == 0) {
+                captured.close()
+                return@withContext null
+            }
             val rowPadding = rowStride - pixelStride * width
             val bitmap = Bitmap.createBitmap(
                 width + rowPadding / pixelStride,
@@ -311,12 +353,9 @@ class GeminiFloatingService : Service() {
             val cropped = Bitmap.createBitmap(bitmap, 0, 0, width, height)
             val outputStream = ByteArrayOutputStream()
             cropped.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
-            image.close()
+            captured.close()
             bitmap.recycle()
             cropped.recycle()
-            virtualDisplay?.release()
-            reader.close()
-            imageReader = null
             Base64.encodeToString(outputStream.toByteArray(), Base64.NO_WRAP)
         }
 
@@ -354,7 +393,7 @@ class GeminiFloatingService : Service() {
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .build()
-        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, notification)
+        notifySafely(NOTIFICATION_ID, notification)
     }
 
     private fun baseNotificationBuilder(): NotificationCompat.Builder {
@@ -450,6 +489,49 @@ class GeminiFloatingService : Service() {
         resultParams = null
         resultTextView = null
         resultTitleView = null
+    }
+
+    private fun startBubbleAnimations(container: View) {
+        stopBubbleAnimations()
+        val scaleX = PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.08f, 1f)
+        val scaleY = PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.08f, 1f)
+        val bubblePulse = ObjectAnimator.ofPropertyValuesHolder(container, scaleX, scaleY).apply {
+            duration = 1600L
+            interpolator = AccelerateDecelerateInterpolator()
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.RESTART
+            start()
+        }
+        bubbleAnimator = bubblePulse
+        val glow = container.findViewById<View>(R.id.view_glow)
+        if (glow != null) {
+            glowAnimator = ObjectAnimator.ofFloat(glow, View.ROTATION, 0f, 360f).apply {
+                duration = 6000L
+                interpolator = LinearInterpolator()
+                repeatCount = ValueAnimator.INFINITE
+                start()
+            }
+        }
+    }
+
+    private fun notifySafely(id: Int, notification: Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                return
+            }
+        }
+        NotificationManagerCompat.from(this).notify(id, notification)
+    }
+
+    private fun stopBubbleAnimations() {
+        bubbleAnimator?.cancel()
+        bubbleAnimator = null
+        glowAnimator?.cancel()
+        glowAnimator = null
     }
 
     private fun ensureProjectionForeground() {

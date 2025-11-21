@@ -54,6 +54,8 @@
     </string-array>
     <string-array name="model_options_doubao">
         <item>doubao-seed-1-6-flash-250828</item>
+        <item>doubao-seed-1-6-lite-251015</item>
+        <item>doubao-seed-1-6-251015</item>
         <item>doubao-seed-1-6-vision-250815</item>
     </string-array>
 </resources>

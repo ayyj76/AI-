@@ -4,8 +4,18 @@
     <size
         android:width="56dp"
         android:height="56dp" />
-    <solid android:color="#2962FF" />
+    <gradient
+        android:centerColor="#FF6D8BFF"
+        android:endColor="#FF3250D2"
+        android:gradientRadius="40dp"
+        android:type="radial"
+        android:useLevel="false" />
     <stroke
-        android:width="2dp"
-        android:color="#FFFFFFFF" />
+        android:width="1dp"
+        android:color="#66FFFFFF" />
+    <padding
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp" />
 </shape>
